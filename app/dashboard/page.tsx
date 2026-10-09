@@ -105,8 +105,8 @@ export default function DashboardPage() {
   }
 
   const planilhasUsadas = userData?.planilhas_usadas || orcamentos.length || 0
-  const planilhasLimite = userData?.planilhas_limite || (userData?.plano === 'pro' || userData?.plano === 'construtora' ? 999 : 1)
-  const isUnlimited = userData?.plano === 'pro' || userData?.plano === 'construtora' || (userData?.planilhas_limite && userData.planilhas_limite >= 999)
+  const planilhasLimite = userData?.planilhas_limite ?? (userData?.plano === 'construtora' ? 9999 : userData?.plano === 'pro' ? 999 : 1)
+  const isUnlimited = planilhasLimite >= 999
   const usagePercent = isUnlimited ? 100 : Math.min(100, Math.round((planilhasUsadas / planilhasLimite) * 100))
 
   return (

@@ -190,13 +190,11 @@ export async function POST(request: Request) {
     const userDoc = await db.collection('users').doc(userId).get();
     if (userDoc.exists) {
       const userData = userDoc.data();
-      const isUnlimited =
-        userData?.plano === 'pro' ||
-        userData?.plano === 'construtora' ||
-        (userData?.planilhas_limite && userData.planilhas_limite >= 999);
+      const planilhasLimite = userData?.planilhas_limite ?? (userData?.plano === 'construtora' ? 9999 : userData?.plano === 'pro' ? 999 : 1);
+      const isUnlimited = planilhasLimite >= 999;
 
-      if (!isUnlimited && (userData?.planilhas_usadas || 0) >= (userData?.planilhas_limite || 1)) {
-        return NextResponse.json({ error: 'Limite de planilhas excedido para o plano atual.' }, { status: 403 });
+      if (!isUnlimited && (userData?.planilhas_usadas || 0) >= planilhasLimite) {
+        return NextResponse.json({ error: `Limite de ${planilhasLimite} planilhas atingido para o plano atual.` }, { status: 403 });
       }
     }
 

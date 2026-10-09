@@ -79,7 +79,7 @@ export default function CouponRedeem() {
             )}
           </div>
           <p className="text-xs text-slate-400 font-normal">
-            Possui um convite especial ou cupom de teste? Digite o código para liberar planilhas ilimitadas.
+            Possui um cupom de teste? Digite o código para liberar planilhas na sua conta.
           </p>
         </div>
 
@@ -92,7 +92,7 @@ export default function CouponRedeem() {
                 setCode(e.target.value.toUpperCase())
                 if (errorMessage) setErrorMessage(null)
               }}
-              placeholder="EX: TESTE-PRO"
+              placeholder="EX: BETATESTER"
               disabled={loading}
               className="w-full sm:w-48 px-3.5 py-2 rounded-xl bg-[#030712]/90 border border-white/[0.12] text-xs font-mono font-bold tracking-wider text-white placeholder:text-slate-500 placeholder:font-normal focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all uppercase"
             />

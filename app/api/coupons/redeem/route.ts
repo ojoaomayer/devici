@@ -12,29 +12,11 @@ const DEFAULT_COUPONS: Record<
     descricao: string
   }
 > = {
-  'VIP-ILIMITADO': {
+  'BETATESTER': {
     plano: 'pro',
-    planilhas_limite: 9999,
+    planilhas_limite: 100,
     maxUses: 1000,
-    descricao: 'Acesso Pro Ilimitado - Convite VIP',
-  },
-  'TESTE-PRO': {
-    plano: 'pro',
-    planilhas_limite: 9999,
-    maxUses: 500,
-    descricao: 'Acesso Pro de Teste',
-  },
-  'BETA-VIP': {
-    plano: 'pro',
-    planilhas_limite: 9999,
-    maxUses: 500,
-    descricao: 'Acesso VIP Beta Tester',
-  },
-  'DEVICI-VIP': {
-    plano: 'pro',
-    planilhas_limite: 9999,
-    maxUses: 1000,
-    descricao: 'Acesso VIP DeVici',
+    descricao: 'Acesso Beta Tester - Limite de 100 Planilhas',
   },
 }
 
@@ -200,9 +182,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Cupom ${code} aplicado com sucesso! Seu plano foi atualizado para Pro com planilhas ilimitadas.`,
+      message: `Cupom ${code} aplicado com sucesso! Seu acesso foi liberado com limite de ${couponData.planilhas_limite || 100} planilhas.`,
       plano: couponData.plano || 'pro',
-      planilhas_limite: couponData.planilhas_limite || 9999,
+      planilhas_limite: couponData.planilhas_limite || 100,
       cupom: code,
     })
   } catch (error: any) {
