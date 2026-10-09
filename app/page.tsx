@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import AnimatedCounter from '@/components/AnimatedCounter'
-import AuroraBackground from '@/components/ui/aurora-background'
+import ScrollVideoBackground from '@/components/ScrollVideoBackground'
 import { CheckoutButton } from '@/components/CheckoutButton'
 import { HeroActions } from '@/components/HeroActions'
 import { FaqSection } from '@/components/FaqSection'
@@ -23,11 +23,12 @@ import { HeroStats } from '@/components/HeroStats'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen text-slate-900 dark:text-slate-100 flex flex-col selection:bg-blue-500/30 selection:text-white relative w-full overflow-x-hidden max-w-full transition-colors bg-slate-50/20 dark:bg-[#020617]/40">
-      <div className="fixed inset-0 z-[-1] pointer-events-none">
-        <AuroraBackground />
-      </div>
-      <Navbar />
+    <div className="min-h-screen text-slate-900 dark:text-slate-100 flex flex-col selection:bg-blue-500/30 selection:text-white relative w-full overflow-x-hidden max-w-full transition-colors bg-transparent">
+      {/* Background Dinâmico: Edifício em construção sincronizado à rolagem da página */}
+      <ScrollVideoBackground />
+
+      <div className="relative z-10 flex flex-col flex-1 w-full">
+        <Navbar />
 
       {/* 1. HERO SECTION (DOBRA PRINCIPAL) */}
       <div className="relative z-10 w-full overflow-hidden flex flex-col justify-center max-w-full py-10 sm:py-16">
@@ -440,6 +441,8 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   )
 }
+
