@@ -190,7 +190,12 @@ export async function POST(request: Request) {
     const userDoc = await db.collection('users').doc(userId).get();
     if (userDoc.exists) {
       const userData = userDoc.data();
-      if ((userData?.planilhas_usadas || 0) >= (userData?.planilhas_limite || 1)) {
+      const isUnlimited =
+        userData?.plano === 'pro' ||
+        userData?.plano === 'construtora' ||
+        (userData?.planilhas_limite && userData.planilhas_limite >= 999);
+
+      if (!isUnlimited && (userData?.planilhas_usadas || 0) >= (userData?.planilhas_limite || 1)) {
         return NextResponse.json({ error: 'Limite de planilhas excedido para o plano atual.' }, { status: 403 });
       }
     }

@@ -7,9 +7,11 @@ import Navbar from '@/components/Navbar'
 import Dropzone from '@/components/Dropzone'
 import ReviewTable from '@/components/ReviewTable'
 import ExportSection from '@/components/ExportSection'
+import { useAuth } from '@/context/AuthContext'
 import type { ModoOrcamento } from '@/components/ScopeSelector'
 
 function OrcamentoContent() {
+  const { user } = useAuth()
   const searchParams = useSearchParams()
   const initialModoParam = searchParams.get('modo') as ModoOrcamento | null
   const defaultModo: ModoOrcamento = initialModoParam === 'projetos' ? 'projetos' : 'execucao'
@@ -45,9 +47,15 @@ function OrcamentoContent() {
     setConfig(runConfig)
 
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (user) {
+        const token = await user.getIdToken()
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
       const response = await fetch('/api/match', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           items: data,
           filter_uf: runConfig.uf,

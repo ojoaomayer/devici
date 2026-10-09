@@ -26,6 +26,8 @@ export interface UserProfile {
   plano: 'free' | 'pro' | 'construtora'
   planilhas_limite: number
   planilhas_usadas: number
+  cupom_ativo?: string
+  cupom_resgatado_em?: any
   criado_em?: any
 }
 

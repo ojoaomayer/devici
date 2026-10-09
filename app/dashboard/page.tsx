@@ -21,6 +21,7 @@ import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/Navbar'
 import { CheckoutButton } from '@/components/CheckoutButton'
+import CouponRedeem from '@/components/CouponRedeem'
 
 export interface OrcamentoDoc {
   id: string
@@ -105,7 +106,7 @@ export default function DashboardPage() {
 
   const planilhasUsadas = userData?.planilhas_usadas || orcamentos.length || 0
   const planilhasLimite = userData?.planilhas_limite || (userData?.plano === 'pro' || userData?.plano === 'construtora' ? 999 : 1)
-  const isUnlimited = userData?.plano === 'pro' || userData?.plano === 'construtora'
+  const isUnlimited = userData?.plano === 'pro' || userData?.plano === 'construtora' || (userData?.planilhas_limite && userData.planilhas_limite >= 999)
   const usagePercent = isUnlimited ? 100 : Math.min(100, Math.round((planilhasUsadas / planilhasLimite) * 100))
 
   return (
@@ -120,13 +121,18 @@ export default function DashboardPage() {
         {/* Workspace Top Bar */}
         <div className="glass-panel rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 blueprint-box">
           <div className="space-y-1">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <h1 className="text-xl font-bold tracking-tight text-white">
                 Workspace • {user.displayName || user.email?.split('@')[0]}
               </h1>
               <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
                 Plano {userData?.plano || 'Free'}
               </span>
+              {userData?.cupom_ativo && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                  VIP {userData.cupom_ativo}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400 font-normal">
               Histórico de orçamentos e conciliações SINAPI salvas na nuvem corporativa.
@@ -218,6 +224,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Coupon / VIP Invite Redemption */}
+        <CouponRedeem />
 
         {/* Budgets Table */}
         <div className="glass-panel rounded-2xl overflow-hidden blueprint-box">
