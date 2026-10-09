@@ -5,18 +5,21 @@ import React, { useEffect, useRef, useState } from "react"
 interface ScrollVideoBackgroundProps {
   /** Caminho do arquivo de vídeo */
   src?: string
-  /** Opacidade base do vídeo (ex: 0.35) */
+  /** Opacidade base do vídeo (ex: 0.85 a 0.95) */
   opacity?: number
-  /** Fator de suavização inercial (0.01 a 0.2, padrão 0.08) */
+  /** Fator de suavização inercial (0.01 a 0.3, padrão 0.18) */
   lerpFactor?: number
+  /** ID do container de rolagem (ex: 'hero-track') para limitar o avanço à Hero Section */
+  containerId?: string
   /** Classes extras para o container */
   className?: string
 }
 
 export function ScrollVideoBackground({
   src = "/videos/building-construction.mp4",
-  opacity = 0.85,
-  lerpFactor = 0.15,
+  opacity = 0.9,
+  lerpFactor = 0.18,
+  containerId = "hero-track",
   className = "",
 }: ScrollVideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -51,15 +54,29 @@ export function ScrollVideoBackground({
     // Pausa o vídeo para garantir que o avanço seja 100% conduzido pelo scroll
     video.pause()
 
-    // 1. Mapeamento da rolagem para a timeline do vídeo
+    // 1. Mapeamento da rolagem para a timeline do vídeo (focado na Hero Section)
     const updateScrollTarget = () => {
-      const docHeight = document.documentElement.scrollHeight
-      const winHeight = window.innerHeight
-      const maxScroll = Math.max(docHeight - winHeight, 1)
-      const currentScroll = Math.max(window.scrollY || window.pageYOffset || 0, 0)
-
-      const scrollFraction = Math.min(Math.max(currentScroll / maxScroll, 0), 1)
       const maxDuration = Math.max(durationRef.current - 0.02, 0)
+      if (maxDuration <= 0) return
+
+      let scrollFraction = 0
+
+      if (containerId) {
+        const container = document.getElementById(containerId)
+        if (container) {
+          const rect = container.getBoundingClientRect()
+          const scrollDistance = Math.max(container.offsetHeight - window.innerHeight, 1)
+          const currentScroll = -rect.top
+          scrollFraction = Math.min(Math.max(currentScroll / scrollDistance, 0), 1)
+        } else {
+          const maxScroll = Math.max(window.innerHeight, 1)
+          scrollFraction = Math.min(Math.max(window.scrollY / maxScroll, 0), 1)
+        }
+      } else {
+        const maxScroll = Math.max(window.innerHeight, 1)
+        scrollFraction = Math.min(Math.max(window.scrollY / maxScroll, 0), 1)
+      }
+
       targetTimeRef.current = scrollFraction * maxDuration
     }
 
@@ -93,7 +110,7 @@ export function ScrollVideoBackground({
 
         const diff = targetTimeRef.current - currentTimeRef.current
 
-        // Salto imediato se a discrepância for grande (ex: carregamento já com rolagem prévia)
+        // Salto imediato se a discrepância for grande
         if (Math.abs(diff) > 1.2) {
           currentTimeRef.current = targetTimeRef.current
           try {
@@ -130,31 +147,29 @@ export function ScrollVideoBackground({
       window.removeEventListener("scroll", updateScrollTarget)
       window.removeEventListener("resize", updateScrollTarget)
     }
-  }, [reducedMotion, lerpFactor])
+  }, [reducedMotion, lerpFactor, containerId])
 
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden select-none bg-[#020617] ${className}`}
+      className={`absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden select-none ${className}`}
     >
-      {/* Moldura 16:9 centralizada e estática no viewport */}
-      <div className="relative w-full h-full max-w-[1920px] flex items-center justify-center">
-        <video
-          ref={videoRef}
-          src={src}
-          playsInline
-          muted
-          preload="auto"
-          disablePictureInPicture
-          className="w-full h-full object-contain aspect-video transition-opacity duration-700 ease-out will-change-transform"
-          style={{
-            opacity: isVideoReady ? opacity : 0,
-          }}
-        />
+      {/* Vídeo ocupando 100% da Hero Section sem barras ou partes pretas */}
+      <video
+        ref={videoRef}
+        src={src}
+        playsInline
+        muted
+        preload="auto"
+        disablePictureInPicture
+        className="w-full h-full object-cover transition-opacity duration-700 ease-out will-change-transform"
+        style={{
+          opacity: isVideoReady ? opacity : 0,
+        }}
+      />
 
-        {/* Camada sutil para harmonização e leitura sem bloquear nitidez do vídeo */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/35 via-transparent to-[#020617]/55 pointer-events-none" />
-      </div>
+      {/* Camada translúcida ultra-leve para harmonização e leitura sem escurecer o vídeo */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/25 via-transparent to-slate-950/45 pointer-events-none" />
     </div>
   )
 }
