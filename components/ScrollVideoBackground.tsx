@@ -15,7 +15,7 @@ interface ScrollVideoBackgroundProps {
 
 export function ScrollVideoBackground({
   src = "/videos/building-construction.mp4",
-  opacity = 0.35,
+  opacity = 0.75,
   lerpFactor = 0.08,
   className = "",
 }: ScrollVideoBackgroundProps) {
@@ -152,23 +152,17 @@ export function ScrollVideoBackground({
         }}
       />
 
-      {/* Camada 1: Gradiente de Profundidade Deep Navy / Black */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/90 via-[#030712]/75 to-[#020617] backdrop-blur-[2px]" />
+      {/* Camada Suave de Proteção de Contraste (translúcida, sem blur pesado) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/55 via-transparent to-[#020617]/75" />
 
-      {/* Camada 2: Vinheta Radial Cinematográfica (luz suave no centro, foco nos cards) */}
+      {/* Vinheta Suave nas Bordas (mantém o centro do vídeo 100% nítido) */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse at 50% 35%, rgba(2, 6, 23, 0.25) 0%, rgba(2, 6, 23, 0.75) 70%, #020617 100%)",
+            "radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(2, 6, 23, 0.5) 100%)",
         }}
       />
-
-      {/* Camada 3: Blueprint Grid técnico (DNA visual da engenharia DeVici) */}
-      <div className="absolute inset-0 blueprint-grid opacity-25 pointer-events-none" />
-
-      {/* Camada 4: Glow neon sutil no topo */}
-      <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-cinematic-glow opacity-30 pointer-events-none" />
     </div>
   )
 }
