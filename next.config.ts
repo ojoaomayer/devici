@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['firebase-admin'],
+
   // Arquivos de dados locais necessários para o servidor
   outputFileTracingIncludes: {
+    '/api/**/*': ['./data/**/*'],
     '/**': ['./data/**/*'],
   },
 

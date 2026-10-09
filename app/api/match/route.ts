@@ -2,15 +2,9 @@ import { NextResponse } from 'next/server'
 import { openai } from '@/lib/openai'
 import { searchSinapiItem } from '@/lib/sinapi-search'
 import { searchSecidItem } from '@/lib/secid-search'
-import { auth, db } from '@/lib/firebase-admin'
 
-// Rate Limiting em memória (por usuário)
-const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
-const RATE_LIMIT_MAX = 50; // max requisições por minuto
-const RATE_LIMIT_WINDOW = 60 * 1000;
-
-// Next.js route segment config — allow up to 5 minutes for large spreadsheets
-export const maxDuration = 300
+// Next.js route segment config — max 60s compativel com Vercel Hobby e Pro
+export const maxDuration = 60
 
 async function processItem(
   item: any,
@@ -160,6 +154,43 @@ Retorne APENAS um JSON válido seguindo a exata estrutura abaixo, sem marcaçõe
   }
 }
 
+// Helper de autenticação duplo: tenta via Admin SDK e usa fallback Google REST Identity
+async function verifyFirebaseToken(token: string): Promise<string | null> {
+  // 1. Tenta decodificar via Firebase Admin se disponível
+  try {
+    const { auth } = await import('@/lib/firebase-admin');
+    const decoded = await auth.verifyIdToken(token);
+    if (decoded?.uid) return decoded.uid;
+  } catch (err: any) {
+    // Silencioso se firebase-admin não tiver credenciais no host
+  }
+
+  // 2. Fallback direto via REST Identity Toolkit do Google (não precisa de Service Account)
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    if (apiKey) {
+      const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: token }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.users?.[0]?.localId || null;
+      }
+    }
+  } catch (err: any) {
+    console.error('REST auth verification error:', err?.message || err);
+  }
+
+  return null;
+}
+
+// Rate Limiting em memória (por usuário)
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+const RATE_LIMIT_MAX = 50; // max requisições por minuto
+const RATE_LIMIT_WINDOW = 60 * 1000;
+
 export async function POST(request: Request) {
   try {
     // 1. Autenticação Obrigatória
@@ -168,13 +199,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const token = authHeader.split('Bearer ')[1];
-    let decodedToken;
-    try {
-      decodedToken = await auth.verifyIdToken(token);
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+    const userId = await verifyFirebaseToken(token);
+    if (!userId) {
+      return NextResponse.json({ error: 'Sessão inválida ou expirada. Faça login novamente.' }, { status: 401 });
     }
-    const userId = decodedToken.uid;
 
     // 2. Rate Limiting / Anti-Abuso
     const now = Date.now();
@@ -191,6 +219,7 @@ export async function POST(request: Request) {
 
     // 3. Verificação de Limite de Plano (Resiliente a erros de conexão/credencial)
     try {
+      const { db } = await import('@/lib/firebase-admin');
       const userDoc = await db.collection('users').doc(userId).get();
       if (userDoc.exists) {
         const userData = userDoc.data();
@@ -202,7 +231,7 @@ export async function POST(request: Request) {
         }
       }
     } catch (dbErr: any) {
-      console.warn('Verificação de limite no Firestore indisponível (permitindo acesso):', dbErr?.message || dbErr);
+      // Continua se o Firestore estiver sem credenciais ou offline no host
     }
 
     const { items, filter_uf = 'PR', modoOrcamento = 'execucao' } = await request.json()
