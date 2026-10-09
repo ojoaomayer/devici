@@ -52,6 +52,17 @@ export function ScrollVideoBackground({
     // Pausa o vídeo para garantir que o avanço seja 100% conduzido pelo scroll
     video.pause()
 
+    // 1. Mapeamento do scroll para a linha do tempo do vídeo
+    const updateScrollTarget = () => {
+      const docHeight = document.documentElement.scrollHeight
+      const winHeight = window.innerHeight
+      const maxScroll = Math.max(docHeight - winHeight, 1)
+      const currentScroll = Math.max(window.scrollY || window.pageYOffset || 0, 0)
+
+      const scrollFraction = Math.min(Math.max(currentScroll / maxScroll, 0), 1)
+      targetTimeRef.current = scrollFraction * (durationRef.current || 0)
+    }
+
     const onMetadataLoaded = () => {
       if (video.duration && !isNaN(video.duration)) {
         durationRef.current = video.duration
@@ -75,17 +86,6 @@ export function ScrollVideoBackground({
 
     video.addEventListener("seeking", onSeeking)
     video.addEventListener("seeked", onSeeked)
-
-    // 2. Mapeamento do scroll para a linha do tempo do vídeo
-    const updateScrollTarget = () => {
-      const docHeight = document.documentElement.scrollHeight
-      const winHeight = window.innerHeight
-      const maxScroll = Math.max(docHeight - winHeight, 1)
-      const currentScroll = Math.max(window.scrollY || window.pageYOffset || 0, 0)
-
-      const scrollFraction = Math.min(Math.max(currentScroll / maxScroll, 0), 1)
-      targetTimeRef.current = scrollFraction * (durationRef.current || 0)
-    }
 
     // 3. Loop de Interpolação Inercial (Lerp via requestAnimationFrame)
     const renderLoop = () => {
