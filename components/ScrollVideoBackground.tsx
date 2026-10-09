@@ -15,8 +15,8 @@ interface ScrollVideoBackgroundProps {
 
 export function ScrollVideoBackground({
   src = "/videos/building-construction.mp4",
-  opacity = 0.75,
-  lerpFactor = 0.08,
+  opacity = 0.85,
+  lerpFactor = 0.15,
   className = "",
 }: ScrollVideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -28,7 +28,6 @@ export function ScrollVideoBackground({
   const currentTimeRef = useRef(0)
   const durationRef = useRef(0)
   const animationFrameRef = useRef<number | null>(null)
-  const isSeekingRef = useRef(false)
 
   useEffect(() => {
     // 1. Detecção de preferência por movimento reduzido (Acessibilidade)
@@ -52,7 +51,7 @@ export function ScrollVideoBackground({
     // Pausa o vídeo para garantir que o avanço seja 100% conduzido pelo scroll
     video.pause()
 
-    // 1. Mapeamento do scroll para a linha do tempo do vídeo
+    // 1. Mapeamento da rolagem para a timeline do vídeo
     const updateScrollTarget = () => {
       const docHeight = document.documentElement.scrollHeight
       const winHeight = window.innerHeight
@@ -60,11 +59,12 @@ export function ScrollVideoBackground({
       const currentScroll = Math.max(window.scrollY || window.pageYOffset || 0, 0)
 
       const scrollFraction = Math.min(Math.max(currentScroll / maxScroll, 0), 1)
-      targetTimeRef.current = scrollFraction * (durationRef.current || 0)
+      const maxDuration = Math.max(durationRef.current - 0.02, 0)
+      targetTimeRef.current = scrollFraction * maxDuration
     }
 
     const onMetadataLoaded = () => {
-      if (video.duration && !isNaN(video.duration)) {
+      if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
         durationRef.current = video.duration
         setIsVideoReady(true)
         updateScrollTarget()
@@ -75,40 +75,39 @@ export function ScrollVideoBackground({
       onMetadataLoaded()
     } else {
       video.addEventListener("loadedmetadata", onMetadataLoaded)
+      video.addEventListener("loadeddata", onMetadataLoaded)
+      video.addEventListener("canplay", onMetadataLoaded)
     }
 
-    const onSeeking = () => {
-      isSeekingRef.current = true
-    }
-    const onSeeked = () => {
-      isSeekingRef.current = false
-    }
-
-    video.addEventListener("seeking", onSeeking)
-    video.addEventListener("seeked", onSeeked)
-
-    // 3. Loop de Interpolação Inercial (Lerp via requestAnimationFrame)
+    // 2. Loop de Interpolação Inercial (Lerp contínuo via requestAnimationFrame)
     const renderLoop = () => {
+      // Fallback para assegurar obtenção da duração
+      if (durationRef.current <= 0 && video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+        durationRef.current = video.duration
+        setIsVideoReady(true)
+        updateScrollTarget()
+      }
+
       if (durationRef.current > 0) {
         updateScrollTarget()
 
         const diff = targetTimeRef.current - currentTimeRef.current
 
-        // Só atualiza se a diferença for perceptível (evita overhead na CPU)
-        if (Math.abs(diff) > 0.005) {
+        // Salto imediato se a discrepância for grande (ex: carregamento já com rolagem prévia)
+        if (Math.abs(diff) > 1.2) {
+          currentTimeRef.current = targetTimeRef.current
+          try {
+            video.currentTime = currentTimeRef.current
+          } catch {}
+        } else if (Math.abs(diff) > 0.003) {
           currentTimeRef.current += diff * lerpFactor
-
-          // Protege contra busca travada
-          if (!isSeekingRef.current) {
-            try {
-              video.currentTime = Math.min(
-                Math.max(currentTimeRef.current, 0),
-                durationRef.current
-              )
-            } catch {
-              // Ignora pequenas oscilações de seek durante decodificação
-            }
-          }
+          const clamped = Math.min(
+            Math.max(currentTimeRef.current, 0),
+            durationRef.current
+          )
+          try {
+            video.currentTime = clamped
+          } catch {}
         }
       }
 
@@ -117,7 +116,7 @@ export function ScrollVideoBackground({
 
     animationFrameRef.current = requestAnimationFrame(renderLoop)
 
-    // Eventos de scroll e redimensionamento para recalcular altura da página
+    // Eventos de scroll e redimensionamento
     window.addEventListener("scroll", updateScrollTarget, { passive: true })
     window.addEventListener("resize", updateScrollTarget, { passive: true })
 
@@ -126,8 +125,8 @@ export function ScrollVideoBackground({
         cancelAnimationFrame(animationFrameRef.current)
       }
       video.removeEventListener("loadedmetadata", onMetadataLoaded)
-      video.removeEventListener("seeking", onSeeking)
-      video.removeEventListener("seeked", onSeeked)
+      video.removeEventListener("loadeddata", onMetadataLoaded)
+      video.removeEventListener("canplay", onMetadataLoaded)
       window.removeEventListener("scroll", updateScrollTarget)
       window.removeEventListener("resize", updateScrollTarget)
     }
@@ -136,33 +135,26 @@ export function ScrollVideoBackground({
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 pointer-events-none z-0 overflow-hidden select-none ${className}`}
+      className={`fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden select-none bg-[#020617] ${className}`}
     >
-      {/* Elemento de Vídeo com aceleração gráfica */}
-      <video
-        ref={videoRef}
-        src={src}
-        playsInline
-        muted
-        preload="auto"
-        disablePictureInPicture
-        className="w-full h-full object-cover transition-opacity duration-1000 ease-out will-change-transform"
-        style={{
-          opacity: isVideoReady ? opacity : 0,
-        }}
-      />
+      {/* Moldura 16:9 centralizada e estática no viewport */}
+      <div className="relative w-full h-full max-w-[1920px] flex items-center justify-center">
+        <video
+          ref={videoRef}
+          src={src}
+          playsInline
+          muted
+          preload="auto"
+          disablePictureInPicture
+          className="w-full h-full object-contain aspect-video transition-opacity duration-700 ease-out will-change-transform"
+          style={{
+            opacity: isVideoReady ? opacity : 0,
+          }}
+        />
 
-      {/* Camada Suave de Proteção de Contraste (translúcida, sem blur pesado) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/55 via-transparent to-[#020617]/75" />
-
-      {/* Vinheta Suave nas Bordas (mantém o centro do vídeo 100% nítido) */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(2, 6, 23, 0.5) 100%)",
-        }}
-      />
+        {/* Camada sutil para harmonização e leitura sem bloquear nitidez do vídeo */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/35 via-transparent to-[#020617]/55 pointer-events-none" />
+      </div>
     </div>
   )
 }
