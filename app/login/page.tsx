@@ -13,6 +13,9 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
 
+  const rawNext = searchParams.get('next')
+  const nextPath = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
+
   const [isSignUp, setIsSignUp] = useState(searchParams.get('mode') === 'signup')
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
@@ -22,9 +25,9 @@ function LoginForm() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard')
+      router.push(nextPath)
     }
-  }, [user, loading, router])
+  }, [user, loading, router, nextPath])
 
   const getFriendlyErrorMessage = (err: any) => {
     const code = err?.code || ''
@@ -66,7 +69,7 @@ function LoginForm() {
     setIsSubmitting(true)
     try {
       await signInWithGoogle()
-      router.push('/dashboard')
+      router.push(nextPath)
     } catch (err: any) {
       console.error('Google Auth Error:', err)
       if (err.code !== 'auth/popup-closed-by-user') {
@@ -93,7 +96,7 @@ function LoginForm() {
       } else {
         await signInWithEmail(email, password)
       }
-      router.push('/dashboard')
+      router.push(nextPath)
     } catch (err: any) {
       console.error('Email Auth Error:', err)
       setErrorMsg(getFriendlyErrorMessage(err))

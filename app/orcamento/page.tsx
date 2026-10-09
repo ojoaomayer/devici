@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { ChevronRight, RotateCcw, FileSpreadsheet, ArrowLeft, ArrowRight, Compass, HardHat } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Dropzone from '@/components/Dropzone'
@@ -11,7 +11,8 @@ import { useAuth } from '@/context/AuthContext'
 import type { ModoOrcamento } from '@/components/ScopeSelector'
 
 function OrcamentoContent() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const initialModoParam = searchParams.get('modo') as ModoOrcamento | null
   const defaultModo: ModoOrcamento = initialModoParam === 'projetos' ? 'projetos' : 'execucao'
@@ -39,12 +40,27 @@ function OrcamentoContent() {
     }
   }, [initialModoParam])
 
+  useEffect(() => {
+    document.body.dataset.orcStep = String(step)
+    window.dispatchEvent(new Event('devici:orcamento-step'))
+    return () => {
+      delete document.body.dataset.orcStep
+    }
+  }, [step])
+
   const handleProcess = async (
     data: any[],
     runConfig: { uf: string; desonerado: boolean; modoOrcamento: ModoOrcamento }
   ) => {
     setIsLoading(true)
     setConfig(runConfig)
+
+    if (!authLoading && !user) {
+      setIsLoading(false)
+      alert('Faça login ou crie sua conta gratuita para processar o orçamento.')
+      router.push('/login?next=/orcamento')
+      return
+    }
 
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -53,25 +69,39 @@ function OrcamentoContent() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const response = await fetch('/api/match', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          items: data,
-          filter_uf: runConfig.uf,
-          desonerado: runConfig.desonerado,
-          modoOrcamento: runConfig.modoOrcamento,
-        }),
-      })
+      // Envia em lotes pequenos: evita timeout/limite de payload do servidor em produção
+      const CHUNK = 25
+      const allResults: any[] = []
+      for (let i = 0; i < data.length; i += CHUNK) {
+        const response = await fetch('/api/match', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            items: data.slice(i, i + CHUNK),
+            filter_uf: runConfig.uf,
+            desonerado: runConfig.desonerado,
+            modoOrcamento: runConfig.modoOrcamento,
+          }),
+        })
 
-      const json = await response.json()
+        const raw = await response.text()
+        let json: any = null
+        try {
+          json = JSON.parse(raw)
+        } catch {
+          /* resposta não-JSON (ex.: timeout 504 do host) */
+        }
 
-      if (json.results) {
-        setResults(json.results)
-        setStep(2)
-      } else {
-        alert('Erro ao processar orçamento.')
+        if (!response.ok || !json?.results) {
+          const detail = json?.error || `HTTP ${response.status}`
+          alert(`Erro ao processar orçamento: ${detail}`)
+          return
+        }
+        allResults.push(...json.results)
       }
+
+      setResults(allResults)
+      setStep(2)
     } catch (error) {
       console.error(error)
       alert('Falha na comunicação com o servidor.')
@@ -177,7 +207,7 @@ function OrcamentoContent() {
 
         {/* Step 1: Upload */}
         {step === 1 && (
-          <div className="space-y-4 py-4 animate-fade-in">
+          <div data-onboarding="upload" className="space-y-4 py-4 animate-fade-in rounded-2xl">
             <Dropzone
               onProcess={handleProcess}
               isLoading={isLoading}
@@ -195,7 +225,7 @@ function OrcamentoContent() {
 
         {/* Step 2: Review Table */}
         {step === 2 && (
-          <div className="space-y-6 animate-fade-in">
+          <div data-onboarding="review" className="space-y-6 animate-fade-in rounded-2xl">
             {/* Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-4 glass-card p-3.5 rounded-xl text-xs">
               <div className="font-mono text-slate-400 flex items-center gap-2 flex-wrap">
@@ -249,7 +279,7 @@ function OrcamentoContent() {
 
         {/* Step 3: Export e Save */}
         {step === 3 && (
-          <div className="space-y-6 animate-fade-in">
+          <div data-onboarding="export" className="space-y-6 animate-fade-in rounded-2xl">
             <ExportSection results={results} config={config} />
 
             <div className="flex justify-between items-center text-xs font-mono pt-2">

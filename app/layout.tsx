@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import SmoothScroll from "@/components/SmoothScroll";
+import Onboarding from "@/components/Onboarding";
 
 
 const geistSans = Geist({
@@ -121,6 +122,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <SmoothScroll>{children}</SmoothScroll>
+            <Onboarding />
           </AuthProvider>
         </ThemeProvider>
       </body>

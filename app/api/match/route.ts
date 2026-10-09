@@ -110,12 +110,15 @@ Retorne APENAS um JSON válido seguindo a exata estrutura abaixo, sem marcaçõe
   let judgment: any = null
 
   try {
-    const aiResponse = await openai.chat.completions.create({
-      model: 'gemini-3.6-flash',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.2,
-    })
+    const aiResponse = await openai.chat.completions.create(
+      {
+        model: 'gemini-3.6-flash',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+      },
+      { timeout: 12000, maxRetries: 0 }
+    )
     judgment = JSON.parse(aiResponse.choices[0].message.content || '{}')
   } catch (error: any) {
     console.warn(`AI Judgment unavailable (${error.status || error.message}), using best candidate ranking:`, error.message?.slice(0, 100))
@@ -217,7 +220,7 @@ export async function POST(request: Request) {
     const safeModo: 'execucao' | 'projetos' = modoOrcamento === 'projetos' ? 'projetos' : 'execucao'
     const safeUf = safeModo === 'projetos' ? 'PR' : (filter_uf || 'PR')
 
-    const BATCH_SIZE = 10
+    const BATCH_SIZE = 25
     const results: any[] = []
 
     for (let i = 0; i < sanitizedItems.length; i += BATCH_SIZE) {
