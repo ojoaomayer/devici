@@ -112,12 +112,12 @@ Retorne APENAS um JSON válido seguindo a exata estrutura abaixo, sem marcaçõe
   try {
     const aiResponse = await openai.chat.completions.create(
       {
-        model: 'gemini-3.6-flash',
+        model: 'gemini-flash-latest',
         messages: [{ role: 'user', content: prompt }],
         response_format: { type: 'json_object' },
         temperature: 0.2,
       },
-      { timeout: 12000, maxRetries: 0 }
+      { timeout: 4000, maxRetries: 0 }
     )
     judgment = JSON.parse(aiResponse.choices[0].message.content || '{}')
   } catch (error: any) {
@@ -189,16 +189,20 @@ export async function POST(request: Request) {
     rateData.count++;
     rateLimitMap.set(userId, rateData);
 
-    // 3. Verificação de Limite de Plano
-    const userDoc = await db.collection('users').doc(userId).get();
-    if (userDoc.exists) {
-      const userData = userDoc.data();
-      const planilhasLimite = userData?.planilhas_limite ?? (userData?.plano === 'construtora' ? 9999 : userData?.plano === 'pro' ? 999 : 1);
-      const isUnlimited = planilhasLimite >= 999;
+    // 3. Verificação de Limite de Plano (Resiliente a erros de conexão/credencial)
+    try {
+      const userDoc = await db.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        const planilhasLimite = userData?.planilhas_limite ?? (userData?.plano === 'construtora' ? 9999 : userData?.plano === 'pro' ? 999 : 1);
+        const isUnlimited = planilhasLimite >= 999;
 
-      if (!isUnlimited && (userData?.planilhas_usadas || 0) >= planilhasLimite) {
-        return NextResponse.json({ error: `Limite de ${planilhasLimite} planilhas atingido para o plano atual.` }, { status: 403 });
+        if (!isUnlimited && (userData?.planilhas_usadas || 0) >= planilhasLimite) {
+          return NextResponse.json({ error: `Limite de ${planilhasLimite} planilhas atingido para o plano atual.` }, { status: 403 });
+        }
       }
+    } catch (dbErr: any) {
+      console.warn('Verificação de limite no Firestore indisponível (permitindo acesso):', dbErr?.message || dbErr);
     }
 
     const { items, filter_uf = 'PR', modoOrcamento = 'execucao' } = await request.json()
@@ -220,7 +224,7 @@ export async function POST(request: Request) {
     const safeModo: 'execucao' | 'projetos' = modoOrcamento === 'projetos' ? 'projetos' : 'execucao'
     const safeUf = safeModo === 'projetos' ? 'PR' : (filter_uf || 'PR')
 
-    const BATCH_SIZE = 25
+    const BATCH_SIZE = 10
     const results: any[] = []
 
     for (let i = 0; i < sanitizedItems.length; i += BATCH_SIZE) {

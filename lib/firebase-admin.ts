@@ -2,8 +2,13 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 function getServiceAccount() {
-  const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  let key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY?.trim();
   if (!key) return undefined;
+
+  // Remove aspas externas se o valor foi colado com aspas no dashboard do provedor (Vercel, etc.)
+  if ((key.startsWith("'") && key.endsWith("'")) || (key.startsWith('"') && key.endsWith('"'))) {
+    key = key.slice(1, -1).trim();
+  }
   
   try {
     const serviceAccount = JSON.parse(key);

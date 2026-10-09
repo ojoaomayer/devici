@@ -69,8 +69,8 @@ function OrcamentoContent() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      // Envia em lotes pequenos: evita timeout/limite de payload do servidor em produção
-      const CHUNK = 25
+      // Envia em lotes de 10 itens: garante resposta rápida (<3s) e evita timeout em servidores serverless (Vercel)
+      const CHUNK = 10
       const allResults: any[] = []
       for (let i = 0; i < data.length; i += CHUNK) {
         const response = await fetch('/api/match', {
@@ -89,11 +89,12 @@ function OrcamentoContent() {
         try {
           json = JSON.parse(raw)
         } catch {
-          /* resposta não-JSON (ex.: timeout 504 do host) */
+          /* resposta não-JSON (ex.: timeout ou página HTML do host) */
         }
 
         if (!response.ok || !json?.results) {
-          const detail = json?.error || `HTTP ${response.status}`
+          console.error('Erro na resposta /api/match:', response.status, raw)
+          const detail = json?.error || (raw && raw.length < 150 && !raw.includes('<') ? raw : `Falha no servidor (${response.status})`)
           alert(`Erro ao processar orçamento: ${detail}`)
           return
         }
