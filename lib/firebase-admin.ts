@@ -19,23 +19,35 @@ function getServiceAccount() {
   }
 }
 
-if (!getApps().length) {
-  try {
-    const serviceAccount = getServiceAccount();
+import { getAuth } from 'firebase-admin/auth';
 
-    if (serviceAccount) {
-      initializeApp({
-        credential: cert(serviceAccount),
-      });
-    } else {
-      console.warn("Using application default credentials because FIREBASE_SERVICE_ACCOUNT_KEY is invalid or missing.");
-      initializeApp();
-    }
-  } catch (error) {
-    console.error('Firebase admin initialization error:', error);
+function ensureApp() {
+  if (getApps().length) return;
+  const serviceAccount = getServiceAccount();
+
+  if (serviceAccount) {
+    initializeApp({ credential: cert(serviceAccount) });
+  } else {
+    console.warn("Using application default credentials because FIREBASE_SERVICE_ACCOUNT_KEY is invalid or missing.");
+    initializeApp();
   }
 }
 
-import { getAuth } from 'firebase-admin/auth';
-export const db = getFirestore();
-export const auth = getAuth();
+// Inicialização preguiçosa: se as credenciais estiverem ausentes/inválidas, o erro
+// acontece dentro do try/catch das rotas (JSON legível) e não na importação do módulo.
+function lazy<T extends object>(factory: () => T): T {
+  let instance: T | null = null;
+  return new Proxy({} as T, {
+    get(_t, prop) {
+      if (!instance) {
+        ensureApp();
+        instance = factory();
+      }
+      const value = (instance as any)[prop];
+      return typeof value === 'function' ? value.bind(instance) : value;
+    },
+  });
+}
+
+export const db = lazy(() => getFirestore());
+export const auth = lazy(() => getAuth());
