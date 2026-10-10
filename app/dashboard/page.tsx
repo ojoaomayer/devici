@@ -189,10 +189,16 @@ export default function DashboardPage() {
             </div>
 
             {!isUnlimited && (
-              <div className="pt-2">
-                <CheckoutButton planId="pro" variant="primary">
-                  Fazer Upgrade (R$ 97)
+              <div className="pt-2 space-y-1">
+                <CheckoutButton planId="pro" billingInterval="year" variant="primary">
+                  Fazer Upgrade Pro (R$ 59/mês)
                 </CheckoutButton>
+                <Link
+                  href="/#precos"
+                  className="text-[10px] text-slate-400 hover:text-blue-400 transition-colors block text-center font-mono"
+                >
+                  Ver planos mensais e anuais →
+                </Link>
               </div>
             )}
           </div>

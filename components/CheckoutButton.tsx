@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react'
 
 interface CheckoutButtonProps {
   planId: 'pro' | 'construtora'
+  billingInterval?: 'month' | 'year'
   children: React.ReactNode
   className?: string
   variant?: 'primary' | 'secondary'
@@ -14,6 +15,7 @@ interface CheckoutButtonProps {
 
 export function CheckoutButton({
   planId,
+  billingInterval = 'year',
   children,
   className = '',
   variant = 'primary',
@@ -26,9 +28,9 @@ export function CheckoutButton({
   const handleCheckout = async () => {
     setErrorMessage(null)
 
-    // Se o usuário não estiver logado, direciona para login/cadastro salvando o plano
+    // Se o usuário não estiver logado, direciona para login/cadastro salvando o plano e ciclo
     if (!user) {
-      router.push(`/login?mode=signup&plan=${planId}`)
+      router.push(`/login?mode=signup&plan=${planId}&billing=${billingInterval}`)
       return
     }
 
@@ -46,6 +48,7 @@ export function CheckoutButton({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId,
+          billingInterval,
           userId: user.uid,
           userEmail: user.email,
           userName: user.displayName || userData?.nome || '',

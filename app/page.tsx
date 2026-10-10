@@ -20,6 +20,7 @@ import { HeroActions } from '@/components/HeroActions'
 import { FaqSection } from '@/components/FaqSection'
 import { BrandLogo } from '@/components/BrandLogo'
 import { HeroStats } from '@/components/HeroStats'
+import { PricingSection } from '@/components/PricingSection'
 
 export default function LandingPage() {
   return (
@@ -227,157 +228,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 6. TABELA DE PREÇOS (TRANSPARENTE E DIRETA) */}
-      <section id="precos" className="relative z-10 py-20 max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
-        <div className="text-center space-y-2">
-
-          <h2 className="text-3xl font-light tracking-tight text-white">
-            Planos e Acesso
-          </h2>
-          <p className="text-xs text-slate-400">
-            Sem fidelidade. Cancele quando quiser.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Plano Gratuito */}
-          <div className="glass-card glass-card-hover rounded-2xl p-6 sm:p-7 flex flex-col justify-between space-y-6">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-bold text-white">Gratuito</h3>
-                <p className="text-xs text-slate-400 mt-1">Ideal para ver o DeVici funcionando no seu projeto real.</p>
-              </div>
-
-              <div className="py-2">
-                <span className="text-3xl font-extrabold font-mono text-white tabular-nums">R$ 0</span>
-                <span className="text-xs text-slate-400 font-mono"> / mês</span>
-              </div>
-
-              <ul className="space-y-2.5 text-xs text-slate-300 pt-4 border-t border-white/[0.08] font-mono">
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>1 orçamento completo</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Até 50 linhas por planilha</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Acesso às calculadoras</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Base SINAPI 27 UFs</span>
-                </li>
-              </ul>
-            </div>
-
-            <Link
-              href="/login?mode=signup"
-              className="btn-secondary w-full py-2.5 text-xs font-semibold text-center"
-            >
-              Começar de graça
-            </Link>
-          </div>
-
-          {/* Plano Profissional (Destaque) */}
-          <div className="glass-panel rounded-2xl p-6 sm:p-7 flex flex-col justify-between space-y-6 relative border-blue-500/10 shadow-[0_0_35px_rgba(59,130,246,0.22)]">
-            <div className="absolute -top-3 right-6">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-blue-500 text-slate-950 shadow-[0_0_12px_rgba(59,130,246,0.8)]">
-                Mais usado
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="pt-1">
-                <h3 className="text-sm font-bold text-white">Profissional</h3>
-                <p className="text-xs text-slate-400 mt-1">Economize mais de 20 horas de digitação técnica todo mês.</p>
-              </div>
-
-              <div className="py-2">
-                <span className="text-3xl font-extrabold font-mono text-white tabular-nums">R$ 47</span>
-                <span className="text-xs text-slate-400 font-mono"> / mês</span>
-                <p className="text-[10px] text-slate-500 font-mono mt-1">
-                  Custo operacional: ~R$ 31/mês (IA + cloud + base SINAPI)
-                </p>
-              </div>
-
-              <ul className="space-y-2.5 text-xs text-slate-200 pt-4 border-t border-white/[0.08] font-mono">
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span><strong>Até 10 planilhas completas por mês</strong></span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Exportação direta com BDI</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Atualização de todas as UFs</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Histórico corporativo em nuvem</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Suporte via WhatsApp</span>
-                </li>
-              </ul>
-            </div>
-
-            <CheckoutButton planId="pro" variant="primary">
-              Assinar Plano Profissional
-            </CheckoutButton>
-          </div>
-
-          {/* Plano Construtora */}
-          <div className="glass-card glass-card-hover rounded-2xl p-6 sm:p-7 flex flex-col justify-between space-y-6">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-bold text-white">Construtora</h3>
-                <p className="text-xs text-slate-400 mt-1">Para empresas com alto volume de licitações e orçamentos executivos.</p>
-              </div>
-
-              <div className="py-2">
-                <span className="text-3xl font-extrabold font-mono text-white tabular-nums">R$ 97</span>
-                <span className="text-xs text-slate-400 font-mono"> / mês</span>
-                <p className="text-[10px] text-slate-500 font-mono mt-1">
-                  Custo operacional: ~R$ 68/mês (infraestrutura + atualizações SECID/SINAPI)
-                </p>
-              </div>
-
-              <ul className="space-y-2.5 text-xs text-slate-300 pt-4 border-t border-white/[0.08] font-mono">
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span><strong>Planilhas ilimitadas</strong></span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Múltiplos usuários de engenharia</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Suporte a SINAPI e SICRO</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Memória de cálculo para licitação</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Atendimento prioritário</span>
-                </li>
-              </ul>
-            </div>
-
-            <CheckoutButton planId="construtora" variant="secondary">
-              Automatizar meu escritório
-            </CheckoutButton>
-          </div>
-        </div>
-      </section>
+      {/* 6. TABELA DE PREÇOS (TRANSPARENTE E DIRETA COM SELETOR MENSAL/ANUAL) */}
+      <PricingSection />
 
       {/* 7. FAQ (QUEBRA DE OBJEÇÕES DE ENGENHEIRO) */}
       <section className="relative z-10 py-20 w-full max-w-4xl mx-auto px-4 sm:px-6 space-y-10">

@@ -4,7 +4,7 @@ import { createStripeCheckoutSession, PLANS } from '@/lib/stripe';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { planId, userId, userEmail, userName } = body;
+    const { planId, billingInterval, userId, userEmail, userName } = body;
 
     if (!planId || !userId || !userEmail) {
       return NextResponse.json(
@@ -20,12 +20,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const validInterval = billingInterval === 'month' ? 'month' : 'year';
+
     // Identificar origem do frontend
     const origin = req.headers.get('origin') || req.headers.get('host') || 'http://localhost:3000';
     const baseUrl = origin.startsWith('http') ? origin : `https://${origin}`;
 
     const { url, sessionId } = await createStripeCheckoutSession({
       planId,
+      billingInterval: validInterval,
       userId,
       userEmail,
       userName,

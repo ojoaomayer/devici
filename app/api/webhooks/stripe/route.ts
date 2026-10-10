@@ -61,8 +61,11 @@ export async function POST(req: NextRequest) {
         const userDocRef = db.collection('users').doc(userId);
         const userDoc = await userDocRef.get();
 
+        const billingInterval = session.metadata?.billingInterval || 'year';
+
         const updateData = {
           plano: planId,
+          ciclo: billingInterval,
           planilhas_limite: planConfig.limit,
           status_assinatura: 'active',
           stripe_customer_id: customerId || null,
