@@ -38,6 +38,8 @@ export default function AnimatedCounter({
     const el = containerRef.current
     if (!el) return
 
+    let rafId: number | null = null
+
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0]
@@ -60,27 +62,31 @@ export default function AnimatedCounter({
           setDisplayValue(current)
 
           if (progress < 1) {
-            requestAnimationFrame(step)
+            rafId = requestAnimationFrame(step)
           } else {
             currentValRef.current = endValue
             setDisplayValue(endValue)
           }
         }
 
-        requestAnimationFrame(step)
+        rafId = requestAnimationFrame(step)
       },
       { threshold: 0.3 }
     )
 
     observer.observe(el)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (rafId) cancelAnimationFrame(rafId)
+    }
   }, [from, to, duration])
 
   // Live periodic increment (telemetry simulation)
   useEffect(() => {
     if (!enableLiveIncrement) return
 
-    let timeoutId: NodeJS.Timeout
+    let timeoutId: NodeJS.Timeout | null = null
+    let flashTimeoutId: NodeJS.Timeout | null = null
 
     const scheduleNextTick = () => {
       const delay = Math.floor(
@@ -94,7 +100,7 @@ export default function AnimatedCounter({
         setDisplayValue(nextVal)
 
         setIsFlashing(true)
-        setTimeout(() => setIsFlashing(false), 800)
+        flashTimeoutId = setTimeout(() => setIsFlashing(false), 800)
 
         scheduleNextTick()
       }, delay)
@@ -106,7 +112,8 @@ export default function AnimatedCounter({
 
     return () => {
       clearTimeout(initialDelay)
-      clearTimeout(timeoutId)
+      if (timeoutId) clearTimeout(timeoutId)
+      if (flashTimeoutId) clearTimeout(flashTimeoutId)
     }
   }, [enableLiveIncrement, duration, incrementIntervalMin, incrementIntervalMax])
 

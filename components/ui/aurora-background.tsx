@@ -20,7 +20,7 @@ export interface AuroraBackgroundProps {
 const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
   className = "",
   children,
-  starCount = 50,
+  starCount = 20,
   gradientColors = [
     "var(--aurora-color1, rgba(168,85,247,0.2))",
     "var(--aurora-color2, rgba(79,70,229,0.2))",
@@ -35,6 +35,17 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
     setMounted(true)
   }, [])
 
+  // Memoiza as posições e parâmetros das estrelas para não recalcular em cada render
+  const stars = React.useMemo(() => {
+    return Array.from({ length: starCount }).map((_, i) => ({
+      id: i,
+      x: `${(i * 19.3) % 100}vw`,
+      y: `${(i * 27.7) % 100}vh`,
+      duration: 2.5 + (i % 3),
+      delay: (i * 0.4) % 5,
+    }))
+  }, [starCount])
+
   return (
     <div
       role="img"
@@ -42,7 +53,7 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
       className={`relative flex flex-col w-full h-full items-center justify-center bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-50 overflow-hidden ${className}`}
     >
       {/* Background layers (hidden from screen readers) */}
-      <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         {/* Pulsing radial gradients */}
         <div
           className="absolute inset-0 opacity-50"
@@ -56,19 +67,19 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
           }}
         />
 
-        {/* Blurred color blobs */}
+        {/* Blurred color blobs com aceleração de hardware */}
         <motion.div
-          className="absolute inset-0 mix-blend-screen"
+          className="absolute inset-0 mix-blend-screen will-change-transform"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, ease: "easeInOut" }}
         >
           <motion.div
-            className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-purple-600 rounded-full filter blur-3xl opacity-40"
+            className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-purple-600 rounded-full filter blur-3xl opacity-40 will-change-transform"
             animate={{
-              x: [-50, 50, -50],
-              y: [-20, 20, -20],
-              scale: [1, 1.2, 1],
+              x: [-40, 40, -40],
+              y: [-15, 15, -15],
+              scale: [1, 1.15, 1],
             }}
             transition={{
               duration: 30,
@@ -78,11 +89,11 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
             }}
           />
           <motion.div
-            className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-fuchsia-600 rounded-full filter blur-3xl opacity-40"
+            className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-fuchsia-600 rounded-full filter blur-3xl opacity-40 will-change-transform"
             animate={{
-              x: [50, -50, 50],
-              y: [20, -20, 20],
-              scale: [1, 1.3, 1],
+              x: [40, -40, 40],
+              y: [15, -15, 15],
+              scale: [1, 1.2, 1],
             }}
             transition={{
               duration: 40,
@@ -92,10 +103,10 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
             }}
           />
           <motion.div
-            className="absolute top-1/3 left-1/3 w-1/3 h-1/3 bg-indigo-700 rounded-full filter blur-3xl opacity-30"
+            className="absolute top-1/3 left-1/3 w-1/3 h-1/3 bg-indigo-700 rounded-full filter blur-3xl opacity-30 will-change-transform"
             animate={{
-              x: [20, -20, 20],
-              y: [-30, 30, -30],
+              x: [15, -15, 15],
+              y: [-20, 20, -20],
               rotate: [0, 360, 0],
             }}
             transition={{
@@ -107,26 +118,27 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
           />
         </motion.div>
 
-        {/* Twinkling stars */}
-        {mounted && Array.from({ length: starCount }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-0.5 h-0.5 bg-slate-800 dark:bg-white rounded-full"
-            initial={{
-              x: `${Math.random() * 100}vw`,
-              y: `${Math.random() * 100}vh`,
-              opacity: 0,
-            }}
-            animate={{
-              opacity: [0, Math.random() * 0.8, 0],
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-            }}
-          />
-        ))}
+        {/* Twinkling stars memoizadas */}
+        {mounted &&
+          stars.map((star) => (
+            <motion.div
+              key={star.id}
+              className="absolute w-0.5 h-0.5 bg-slate-800 dark:bg-white rounded-full"
+              initial={{
+                x: star.x,
+                y: star.y,
+                opacity: 0,
+              }}
+              animate={{
+                opacity: [0, 0.7, 0],
+              }}
+              transition={{
+                duration: star.duration,
+                repeat: Infinity,
+                delay: star.delay,
+              }}
+            />
+          ))}
       </div>
 
       {/* Foreground content */}
