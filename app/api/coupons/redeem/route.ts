@@ -120,7 +120,7 @@ export async function POST(request: Request) {
     // 3. Validações do Cupom
     if (couponData.active === false) {
       return NextResponse.json(
-        { error: 'Este cupom foi desativado e não pode mais ser utilizado.' },
+        { error: `O cupom "${code}" foi desativado e não está mais disponível para resgate.` },
         { status: 400 }
       )
     }
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
         : new Date(couponData.expiresAt)
       if (new Date() > expirationDate) {
         return NextResponse.json(
-          { error: 'Este cupom já expirou.' },
+          { error: `O cupom "${code}" expirou e não pode mais ser utilizado.` },
           { status: 400 }
         )
       }
@@ -141,22 +141,35 @@ export async function POST(request: Request) {
     const maxUses = couponData.maxUses || 999999
     if (usedCount >= maxUses) {
       return NextResponse.json(
-        { error: 'Este cupom atingiu o limite máximo de resgates permitidos.' },
+        { error: `O cupom "${code}" atingiu o limite máximo de ativações disponíveis.` },
         { status: 400 }
       )
     }
+
+    // 4. Verificar se o usuário já utilizou o cupom anteriormente
+    const userRef = db.collection('users').doc(userId)
+    const userSnap = await userRef.get()
+    const userData = userSnap.exists ? userSnap.data() : null
 
     const redeemedBy = couponData.redeemedBy || []
-    if (redeemedBy.includes(userId)) {
+    const cuponsResgatados: string[] = userData?.cupons_resgatados || []
+
+    const isAlreadyRedeemed =
+      userData?.cupom_ativo === code ||
+      cuponsResgatados.includes(code) ||
+      redeemedBy.includes(userId)
+
+    if (isAlreadyRedeemed) {
       return NextResponse.json(
-        { error: 'Você já resgatou este cupom na sua conta.' },
+        {
+          error: `Você já resgatou o cupom ${code} nesta conta! Cada cupom promocional só pode ser utilizado uma única vez por usuário. Seu acesso com limite liberado já está ativo.`,
+          code: 'COUPON_ALREADY_USED',
+        },
         { status: 400 }
       )
     }
 
-    // 4. Atualizar Perfil do Usuário e Registrar o Resgate do Cupom
-    const userRef = db.collection('users').doc(userId)
-
+    // 5. Atualizar Perfil do Usuário e Registrar o Resgate do Cupom
     const batch = db.batch()
 
     // Incrementa contagem de uso do cupom e adiciona o uid aos resgates
@@ -171,8 +184,9 @@ export async function POST(request: Request) {
       userRef,
       {
         plano: couponData.plano || 'pro',
-        planilhas_limite: couponData.planilhas_limite || 9999,
+        planilhas_limite: couponData.planilhas_limite || 100,
         cupom_ativo: code,
+        cupons_resgatados: FieldValue.arrayUnion(code),
         cupom_resgatado_em: FieldValue.serverTimestamp(),
       },
       { merge: true }
@@ -190,7 +204,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Erro ao resgatar cupom:', error)
     return NextResponse.json(
-      { error: error.message || 'Erro interno ao processar cupom.' },
+      { error: error.message || 'Não foi possível validar o cupom no momento. Tente novamente em instantes.' },
       { status: 500 }
     )
   }

@@ -41,17 +41,43 @@ export default function CouponRedeem() {
         body: JSON.stringify({ code: code.trim() }),
       })
 
-      const data = await response.json()
+      // Leitura resiliente do corpo da resposta para evitar "Unexpected end of JSON input"
+      let data: any = null
+      try {
+        const text = await response.text()
+        data = text ? JSON.parse(text) : {}
+      } catch {
+        data = {}
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Não foi possível resgatar o cupom.')
+        if (response.status === 401) {
+          throw new Error('Sua sessão expirou. Faça login novamente para resgatar o cupom.')
+        }
+        if (response.status === 404) {
+          throw new Error(`O cupom "${code.trim().toUpperCase()}" não foi encontrado. Verifique se o código está correto.`)
+        }
+        const serverError = data?.error || data?.message
+        if (serverError) {
+          throw new Error(serverError)
+        }
+        throw new Error('Não foi possível resgatar o cupom no momento. Tente novamente em instantes.')
       }
 
       setSuccessMessage(data.message || 'Cupom resgatado com sucesso! Plano Pro ativado.')
       setCode('')
       await refreshUserData()
     } catch (err: any) {
-      setErrorMessage(err.message || 'Erro ao processar cupom.')
+      const rawMsg = err?.message || ''
+      let friendlyMsg = 'Erro ao processar cupom.'
+
+      if (rawMsg.includes('Unexpected end of JSON input') || rawMsg.includes('Failed to execute')) {
+        friendlyMsg = 'Não foi possível validar o cupom. Verifique sua conexão e tente novamente.'
+      } else if (rawMsg) {
+        friendlyMsg = rawMsg
+      }
+
+      setErrorMessage(friendlyMsg)
     } finally {
       setLoading(false)
     }

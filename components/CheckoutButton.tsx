@@ -52,17 +52,28 @@ export function CheckoutButton({
         }),
       })
 
-      const data = await res.json()
+      let data: any = null
+      try {
+        const text = await res.text()
+        data = text ? JSON.parse(text) : {}
+      } catch {
+        data = {}
+      }
 
       if (!res.ok || !data.url) {
-        throw new Error(data.error || 'Não foi possível iniciar o checkout no momento.')
+        throw new Error(data.error || 'Não foi possível iniciar o checkout no momento. Tente novamente em instantes.')
       }
 
       // Redireciona para o checkout seguro do Stripe
       window.location.href = data.url
     } catch (err: any) {
       console.error('Erro ao iniciar checkout Stripe:', err)
-      setErrorMessage(err.message || 'Erro ao conectar ao Stripe.')
+      const rawMsg = err?.message || ''
+      const friendlyMsg =
+        rawMsg.includes('Unexpected end of JSON input') || rawMsg.includes('Failed to execute')
+          ? 'Não foi possível conectar ao provedor de pagamento. Verifique sua conexão e tente novamente.'
+          : rawMsg || 'Erro ao conectar ao checkout seguro.'
+      setErrorMessage(friendlyMsg)
       setLoading(false)
     }
   }

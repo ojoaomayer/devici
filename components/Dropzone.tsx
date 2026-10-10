@@ -233,10 +233,16 @@ export default function Dropzone({ onProcess, isLoading, initialModo = 'execucao
           method: 'POST',
           body: formData,
         })
-        const data = await res.json()
+        let data: any = null
+        try {
+          const text = await res.text()
+          data = text ? JSON.parse(text) : {}
+        } catch {
+          data = {}
+        }
 
         if (!res.ok) {
-          throw new Error(data.error || 'Erro ao processar PDF')
+          throw new Error(data.error || 'Erro ao processar o arquivo PDF. Verifique se o arquivo não está corrompido.')
         }
 
         const { grid } = data
