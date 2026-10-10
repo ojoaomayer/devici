@@ -15,7 +15,6 @@ import {
 import Navbar from '@/components/Navbar'
 import AnimatedCounter from '@/components/AnimatedCounter'
 import AuroraBackground from '@/components/ui/aurora-background'
-import ScrollExpandMedia from '@/components/ui/scroll-expansion-hero'
 import { CheckoutButton } from '@/components/CheckoutButton'
 import { HeroActions } from '@/components/HeroActions'
 import { FaqSection } from '@/components/FaqSection'
@@ -25,51 +24,41 @@ import { HeroStats } from '@/components/HeroStats'
 export default function LandingPage() {
   return (
     <div className="min-h-screen text-slate-900 dark:text-slate-100 flex flex-col selection:bg-blue-500/30 selection:text-white relative w-full overflow-x-hidden max-w-full transition-colors bg-slate-50/20 dark:bg-[#020617]/40">
-      {/* Background Aurora ambiental nas demais seções do site (sem telas pretas) */}
       <div className="fixed inset-0 z-[-1] pointer-events-none">
         <AuroraBackground />
       </div>
+      <Navbar />
 
-      <div className="relative z-10 flex flex-col flex-1 w-full">
-        <Navbar />
-
-        {/* HERO SECTION DINÂMICA COM SCROLL EXPAND MEDIA */}
-        <ScrollExpandMedia
-          mediaType="video"
-          mediaSrc="/videos/building-construction.mp4"
-          bgImageSrc="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop"
-          title="DeVici Orçamentos Inteligentes"
-          date="Engenharia de Custos com IA"
-          scrollToExpand="Role para expandir a experiência"
-          textBlend={false}
-        >
-          {/* Conteúdo principal da Hero revelado na expansão */}
-          <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-4 sm:pt-8 pb-12 text-center space-y-6 sm:space-y-8 w-full">
-            {/* Headline (H1) */}
-            <div className="max-w-4xl mx-auto space-y-4 sm:space-y-5">
-              <h1 className="animate-fade-in-up delay-100 text-2xl sm:text-4xl md:text-5xl lg:text-[52px] font-light tracking-tight text-slate-900 dark:text-white leading-[1.2] max-w-full drop-shadow-sm">
-                Seu orçamento pronto <br className="hidden sm:inline" />
-                <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-b from-slate-950 via-slate-800 to-blue-700 dark:from-white dark:via-slate-100 dark:to-blue-200">
-                  enquanto você toma um{' '}
-                  <span className="relative inline-block px-1">
-                    <span className="relative z-10 text-amber-900 dark:text-amber-100 font-semibold">café.</span>
-                    <span className="absolute left-0 right-0 top-[38%] bottom-0 bg-amber-200/90 dark:bg-[#451a03]/75 border-t border-amber-400 dark:border-[#b45309]/70 shadow-[0_0_20px_rgba(251,191,36,0.3)] dark:shadow-[0_0_20px_rgba(180,83,9,0.25)] -z-0 pointer-events-none" />
-                  </span>
+      {/* 1. HERO SECTION (DOBRA PRINCIPAL) */}
+      <div className="relative z-10 w-full overflow-hidden flex flex-col justify-center max-w-full py-10 sm:py-16">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 lg:pt-20 text-center space-y-8 w-full">
+          {/* Headline (H1) */}
+          <div className="max-w-4xl mx-auto space-y-4 sm:space-y-5">
+            <h1 className="animate-fade-in-up delay-100 text-2xl sm:text-4xl md:text-5xl lg:text-[52px] font-light tracking-tight text-slate-900 dark:text-white leading-[1.2] max-w-full">
+              Seu orçamento pronto <br className="hidden sm:inline" />
+              <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-b from-slate-950 via-slate-800 to-blue-700 dark:from-white dark:via-slate-100 dark:to-blue-200">
+                enquanto você toma um{' '}
+                <span className="relative inline-block px-1">
+                  <span className="relative z-10 text-amber-900 dark:text-amber-100 font-semibold">café.</span>
+                  <span className="absolute left-0 right-0 top-[38%] bottom-0 bg-amber-200/90 dark:bg-[#451a03]/75 border-t border-amber-400 dark:border-[#b45309]/70 shadow-[0_0_20px_rgba(251,191,36,0.3)] dark:shadow-[0_0_20px_rgba(180,83,9,0.25)] -z-0 pointer-events-none" />
                 </span>
-              </h1>
+              </span>
+            </h1>
 
-              {/* Sub-headline */}
-              <p className="animate-fade-in-up delay-200 text-xs sm:text-sm md:text-base text-slate-700 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal px-2">
-                <strong>Plataforma inteligente de engenharia de custos.</strong> Esqueça o copia-e-cola em planilhas: Cruzamos seus quantitativos com as bases SINAPI e SECID em segundos, gerando orçamentos precisos, licitáveis e sem erros.
-              </p>
-            </div>
-
-            {/* CTAs — Client Component com seleção direta de escopo */}
-            <HeroActions />
-
-            {/* Stats em Tempo Real */}
-            <HeroStats />
+            {/* Sub-headline */}
+            <p className="animate-fade-in-up delay-200 text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed font-normal px-2">
+              <strong>Plataforma inteligente de engenharia de custos.</strong> Esqueça o copia-e-cola em planilhas: Cruzamos seus quantitativos com as bases SINAPI e SECID em segundos, gerando orçamentos precisos, licitáveis e sem erros.
+            </p>
           </div>
+
+          {/* CTAs — Client Component com seleção direta de escopo */}
+          <HeroActions />
+
+          {/* Stats em Tempo Real */}
+          <HeroStats />
+
+        </div>
+      </div>
 
 
       {/* 3. SEÇÃO "O ANTES vs. DEPOIS" (A DOR REAL) */}
@@ -451,9 +440,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-      </ScrollExpandMedia>
     </div>
-  </div>
   )
 }
-
