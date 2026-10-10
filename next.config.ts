@@ -23,6 +23,15 @@ const nextConfig: NextConfig = {
   // Turbopack: sem configurações extras — usa .next/ local por padrão
   turbopack: {},
 
+  // Configuração de imagens para suportar Unsplash e provedores de CDN
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'cdn.21st.dev' },
+      { protocol: 'https', hostname: 'me7aitdbxq.ufs.sh' },
+    ],
+  },
+
   // Headers de cache para assets de vídeo (mp4)
   // NOTA: Não configuramos cache para /_next/static em produção aqui para
   // evitar o aviso do Next.js. Em produção, CDNs como Vercel já gerenciam
